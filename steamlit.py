@@ -10,6 +10,9 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
+from sklearn.cluster import KMeans
+import plotly.express as px
+
 # Load the dataset
 file_path = 'Customer Data.csv'
 customer_data = pd.read_csv(file_path)
@@ -28,7 +31,7 @@ customer_data_scaled = scaler.fit_transform(customer_data)
 # Split the data into two sets (70% training, 30% testing)
 data_train, data_test = train_test_split(customer_data_scaled, test_size=0.3, random_state=42)
 
-from sklearn.cluster import KMeans
+
 
 # Perform K-means clustering on the training set
 kmeans = KMeans(n_clusters=4, random_state=42)
@@ -65,11 +68,15 @@ y_test_pred = clf.predict(X_test)
 # Evaluate the classifier
 print('Accuracy:', accuracy_score(y_train, clf.predict(X_train)))
 
+import joblib
+# joblib.dump(clf, 'random_forest_model.pkl')
+# joblib.dump(scaler, 'scaler.pkl')
+clf = joblib.load('random_forest_model.pkl')  # Adjust the file path as needed
+scaler = joblib.load('scaler.pkl')  # Adjust the file path as needed
 
-
-# Load the trained model and scaler
-clf = ...  # Load your trained RandomForest model
-scaler = ...  # Load your trained StandardScaler
+# Load the data with clusters for displaying the charts
+# This is a placeholder, replace with the actual data loading code
+data_train_with_labels = pd.read_csv('Customer Data.csv')  # Adjust the file path as needed
 
 # Define the Streamlit app
 st.title('Customer Segmentation')
@@ -94,4 +101,16 @@ if st.button('Predict'):
     # Predict the cluster
     cluster = clf.predict(input_data_scaled)
     st.write(f'The customer belongs to cluster: {cluster[0]}')
-    
+
+# Plot pie chart and bar chart
+if st.checkbox('Show Customer Segment Distribution'):
+    cluster_counts = data_train_with_labels['Cluster'].value_counts().reset_index()
+    cluster_counts.columns = ['Cluster', 'Count']
+
+    # Pie chart
+    fig_pie = px.pie(cluster_counts, names='Cluster', values='Count', title='Customer Segment Distribution')
+    st.plotly_chart(fig_pie)
+
+    # Bar chart
+    fig_bar = px.bar(cluster_counts, x='Cluster', y='Count', title='Customer Segment Count', text='Count')
+    st.plotly_chart(fig_bar)
